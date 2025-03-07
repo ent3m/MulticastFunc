@@ -5,7 +5,7 @@ namespace MulticastFunc
 {
     public class MulticastFunc<T, TResult>
     {
-        readonly List<Func<T, TResult>> list = new List<Func<T, TResult>>();
+        readonly List<Delegate> list = new List<Delegate>();
         Action<T, TResult[]>? funcs;
 
         public int Count => list.Count;
@@ -19,9 +19,7 @@ namespace MulticastFunc
 
         public static MulticastFunc<T, TResult>? operator -(MulticastFunc<T, TResult>? a, Func<T, TResult> b)
         {
-            if (a == null)
-                return a;
-            a.Remove(b);
+            a?.Remove(b);
             return a;
         }
 
@@ -35,11 +33,12 @@ namespace MulticastFunc
         public static explicit operator Func<T, TResult>?(MulticastFunc<T, TResult>? m)
         {
             Func<T, TResult>? f = null;
-            if (m == null)
-                return f;
-            foreach (var func in m.list)
+            if (m != null)
             {
-                f += func;
+                foreach (var func in m.list)
+                {
+                    f += (Func<T, TResult>)func;
+                }
             }
             return f;
         }
@@ -47,17 +46,18 @@ namespace MulticastFunc
         public TResult[] Invoke(T arg)
         {
             var results = new TResult[list.Count];
-            funcs!.Invoke(arg, results);
+            funcs?.Invoke(arg, results);
             return results;
         }
 
         private void Add(Func<T, TResult> func)
         {
+            if (func == null) return;
             var functions = func.GetInvocationList();
             foreach (var function in functions)
             {
+                list.Add(function);
                 var f = (Func<T, TResult>)function;
-                list.Add(f);
                 int j = list.Count - 1;
                 funcs += (a, x) => x[j] = f(a);
             }
@@ -65,13 +65,18 @@ namespace MulticastFunc
 
         private void Remove(Func<T, TResult> func)
         {
-            var removal = new HashSet<Delegate>(func.GetInvocationList());
-            list.RemoveAll(x => removal.Contains(x));
-            funcs = null;
-            for (int i = 0; i < list.Count; i++)
+            if (func == null) return;
+            var removals = func.GetInvocationList();
+            int removed = list.RemoveAll(x => Array.IndexOf(removals, x) != -1);
+            if (removed > 0)
             {
-                int j = i;
-                funcs += (a, x) => x[j] = list[j](a);
+                funcs = null;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    int j = i;
+                    var f = (Func<T, TResult>)list[i];
+                    funcs += (a, x) => x[j] = f(a);
+                }
             }
         }
 
