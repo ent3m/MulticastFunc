@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using MulticastFunc;
+using System.Buffers;
 
 namespace MulticastFuncBenchmark;
 
@@ -8,10 +9,10 @@ public class MulticastFuncBenchmark
 {
     Func<int>? funcDelegate;
     MulticastFunc<int>? multicastFunc;
+    readonly ArrayBufferWriter<int> bufferWriter = new(10);
     static int Method() => 42;
 
-    [Params(5, 50)]
-    public int count = 5;
+    public int InvocationCount = 10;
 
     [GlobalSetup]
     public void Setup()
@@ -23,7 +24,7 @@ public class MulticastFuncBenchmark
     public Func<int>? BuildFuncDelegate()
     {
         Func<int>? func = default;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < InvocationCount; i++)
         {
             func += Method;
         }
@@ -33,7 +34,7 @@ public class MulticastFuncBenchmark
     public MulticastFunc<int>? BuildMulticastFunc()
     {
         MulticastFunc<int>? func = default;
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < InvocationCount; i++)
         {
             func += Method;
         }
@@ -50,5 +51,11 @@ public class MulticastFuncBenchmark
     public int[] InvokeMulticastFunc()
     {
         return multicastFunc!.Invoke();
+    }
+
+    [Benchmark]
+    public ReadOnlySpan<int> InvokeMulticastFuncWithBuffer()
+    {
+        return multicastFunc!.Invoke(bufferWriter.GetSpan(multicastFunc!.Count));
     }
 }

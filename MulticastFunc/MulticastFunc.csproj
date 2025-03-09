@@ -6,6 +6,12 @@
     <Authors>Entem</Authors>
     <Company>Entem</Company>
     <SignAssembly>False</SignAssembly>
+    <Title>MulticastFunc</Title>
+    <Description>Provide a simple way to get all the results from a multicast delegate.</Description>
+    <RepositoryUrl>https://github.com/ent3m/MulticastFunc</RepositoryUrl>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile></PackageReadmeFile>
   </PropertyGroup>
 
 </Project>

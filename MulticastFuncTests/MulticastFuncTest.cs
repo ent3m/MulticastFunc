@@ -15,6 +15,7 @@ namespace MulticastFuncTests
             combinedFunc += func;
             combinedFunc += func;
 
+            // construct a MulticastFunc
             MulticastFunc<int>? multicast = null;
             multicast += func;  // add a single method
             multicast += () => 43;  // add a lambda expression
@@ -34,6 +35,7 @@ namespace MulticastFuncTests
             combinedFunc += func;
             combinedFunc += func;
 
+            // construct a MulticastFunc
             MulticastFunc<int>? multicast = null;
             multicast += combinedFunc;  // add a multicast delegate
             multicast += func;  // add a single method
@@ -50,7 +52,7 @@ namespace MulticastFuncTests
             Func<int> func = () => 42;
             // func is implicitly converted to MulticastFunc so it can be assigned to MulticastFunc
             MulticastFunc<int> multicast = func;
-            
+
             Assert.AreEqual(1, multicast.Count);
         }
 
@@ -75,6 +77,7 @@ namespace MulticastFuncTests
             Func<int> func3 = () => 44;
             Func<int> func4 = () => 45;
 
+            // create a MulticastFunc with 4 functions
             MulticastFunc<int>? multicast = func1;
             multicast += func2;
             multicast += func3;
@@ -87,5 +90,27 @@ namespace MulticastFuncTests
             CollectionAssert.AreEquivalent(expected, results);
         }
         private static readonly int[] expected = [42, 44, 45];
+
+        [TestMethod]
+        public void Invoke_SpanBuffer()
+        {
+            static int func() => 42;
+
+            // create a MulticastFunc with 3 functions that return 42
+            MulticastFunc<int>? multicast = null;
+            multicast += func;
+            multicast += func;
+            multicast += func;
+
+            // create a buffer large enough to store the results
+            Span<int> buffer = stackalloc int[multicast.Count];
+            var results = multicast.Invoke(buffer);
+
+            // the buffer should be filled with 42
+            Assert.AreEqual(3, results.Length);
+            Assert.AreEqual(42, buffer[0]);
+            Assert.AreEqual(42, buffer[1]);
+            Assert.AreEqual(42, buffer[2]);
+        }
     }
 }

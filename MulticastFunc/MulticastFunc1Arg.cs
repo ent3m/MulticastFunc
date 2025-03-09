@@ -5,10 +5,9 @@ namespace MulticastFunc
 {
     public class MulticastFunc<T, TResult>
     {
-        readonly List<Delegate> list = new List<Delegate>();
-        Action<T, TResult[]>? funcs;
+        readonly List<Func<T, TResult>> funcs = new List<Func<T, TResult>>();
 
-        public int Count => list.Count;
+        public int Count => funcs.Count;
 
         public static MulticastFunc<T, TResult> operator +(MulticastFunc<T, TResult>? a, Func<T, TResult> b)
         {
@@ -23,31 +22,41 @@ namespace MulticastFunc
             return a;
         }
 
-        public static implicit operator MulticastFunc<T, TResult>(Func<T, TResult> f)
-        {
-            MulticastFunc<T, TResult> m = new MulticastFunc<T, TResult>();
-            m.Add(f);
-            return m;
-        }
+        public static implicit operator MulticastFunc<T, TResult>(Func<T, TResult> f) => new MulticastFunc<T, TResult>(f);
 
         public static explicit operator Func<T, TResult>?(MulticastFunc<T, TResult>? m)
         {
-            Func<T, TResult>? f = null;
+            Func<T, TResult>? f = default;
             if (m != null)
             {
-                foreach (var func in m.list)
+                foreach (var func in m.funcs)
                 {
-                    f += (Func<T, TResult>)func;
+                    f += func;
                 }
             }
             return f;
         }
 
+        public MulticastFunc(Func<T, TResult> func) => Add(func);
+        private MulticastFunc() { }
+
         public TResult[] Invoke(T arg)
         {
-            var results = new TResult[list.Count];
-            funcs?.Invoke(arg, results);
+            var results = new TResult[Count];
+            Invoke(arg, results);
             return results;
+        }
+
+        public ReadOnlySpan<TResult> Invoke(T arg, Span<TResult> buffer)
+        {
+            var count = funcs.Count;
+            if (buffer.Length < count)
+                throw new ArgumentException("Buffer is too small", nameof(buffer));
+            for (int i = 0; i < count; i++)
+            {
+                buffer[i] = funcs[i](arg);
+            }
+            return buffer[..count];
         }
 
         private void Add(Func<T, TResult> func)
@@ -56,10 +65,7 @@ namespace MulticastFunc
             var functions = func.GetInvocationList();
             foreach (var function in functions)
             {
-                list.Add(function);
-                var f = (Func<T, TResult>)function;
-                int j = list.Count - 1;
-                funcs += (a, x) => x[j] = f(a);
+                funcs.Add((Func<T, TResult>)function);
             }
         }
 
@@ -67,19 +73,7 @@ namespace MulticastFunc
         {
             if (func == null) return;
             var removals = func.GetInvocationList();
-            int removed = list.RemoveAll(x => Array.IndexOf(removals, x) != -1);
-            if (removed > 0)
-            {
-                funcs = null;
-                for (int i = 0; i < list.Count; i++)
-                {
-                    int j = i;
-                    var f = (Func<T, TResult>)list[i];
-                    funcs += (a, x) => x[j] = f(a);
-                }
-            }
+            int removed = funcs.RemoveAll(x => Array.IndexOf(removals, x) != -1);
         }
-
-        private MulticastFunc() { }
     }
 }
