@@ -42,7 +42,13 @@ public class MulticastFuncBenchmark
     }
 
     [Benchmark]
-    public int[] InvokeFuncDelegate()
+    public int InvokeFuncSingleResult()
+    {
+        return funcDelegate!.Invoke();
+    }
+
+    [Benchmark]
+    public int[] InvokeFuncAllResults()
     {
         return funcDelegate!.GetInvocationList().Cast<Func<int>>().Select(x => x.Invoke()).ToArray();
     }
@@ -57,5 +63,23 @@ public class MulticastFuncBenchmark
     public ReadOnlySpan<int> InvokeMulticastFuncWithBuffer()
     {
         return multicastFunc!.Invoke(bufferWriter.GetSpan(multicastFunc!.Count));
+    }
+
+    public void ModifyFuncDelegate()
+    {
+        for (int i = 0; i < InvocationCount; i++)
+        {
+            funcDelegate += Method;
+            funcDelegate -= Method;
+        }
+    }
+
+    public void ModifyMulticastFunc()
+    {
+        for (int i = 0; i < InvocationCount; i++)
+        {
+            multicastFunc += Method;
+            multicastFunc -= Method;
+        }
     }
 }

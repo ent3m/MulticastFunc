@@ -13,12 +13,16 @@ namespace MulticastFunc
         {
             a ??= new MulticastFunc<T1, T2, TResult>();
             a.Add(b);
+            if (a.Count == 0)
+                return null!;
             return a;
         }
 
-        public static MulticastFunc<T1, T2, TResult>? operator -(MulticastFunc<T1, T2, TResult>? a, Func<T1, T2, TResult> b)
+        public static MulticastFunc<T1, T2, TResult>? operator -(MulticastFunc<T1, T2, TResult> a, Func<T1, T2, TResult> b)
         {
             a?.Remove(b);
+            if (a != null && a.Count == 0)
+                return null;
             return a;
         }
 
@@ -73,7 +77,43 @@ namespace MulticastFunc
         {
             if (func == null) return;
             var removals = func.GetInvocationList();
-            int removed = funcs.RemoveAll(x => Array.IndexOf(removals, x) != -1);
+
+            // Remove removals from the list of funcs using two pointer method
+            int freeIndex = 0;   // the first free slot in items array
+            int removalsCount = removals.Length;    // the number of items to remove
+
+            // Return true if item is in removals
+            bool Match(Delegate item)
+            {
+                int index = Array.IndexOf(removals, item, 0, removalsCount);
+                if (index != -1)
+                {
+                    // avoid removing the same item twice
+                    removals[index] = removals[--removalsCount];
+                    return true;
+                }
+                return false;
+            }
+
+            // Find the first item which needs to be removed
+            while (freeIndex < funcs.Count && !Match(funcs[freeIndex])) freeIndex++;
+            if (freeIndex >= funcs.Count) return;
+
+            int current = freeIndex + 1;
+            while (current < funcs.Count)
+            {
+                // Find the first item which needs to be kept
+                while (current < funcs.Count && Match(funcs[current])) current++;
+
+                if (current < funcs.Count)
+                {
+                    // copy item to the free slot
+                    funcs[freeIndex++] = funcs[current++];
+                }
+            }
+
+            funcs.RemoveRange(freeIndex, funcs.Count - freeIndex);
+            return;
         }
     }
 }
