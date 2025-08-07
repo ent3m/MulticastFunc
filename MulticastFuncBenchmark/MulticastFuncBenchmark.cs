@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Engines;
 using MulticastFunc;
 using System.Buffers;
 
@@ -9,10 +10,10 @@ public class MulticastFuncBenchmark
 {
     Func<int>? funcDelegate;
     MulticastFunc<int>? multicastFunc;
-    readonly ArrayBufferWriter<int> bufferWriter = new(10);
+    readonly ArrayBufferWriter<int> bufferWriter = new(InvocationCount);
     static int Method() => 42;
 
-    public int InvocationCount = 10;
+    public const int InvocationCount = 20;
 
     [GlobalSetup]
     public void Setup()
@@ -42,13 +43,7 @@ public class MulticastFuncBenchmark
     }
 
     [Benchmark]
-    public int InvokeFuncSingleResult()
-    {
-        return funcDelegate!.Invoke();
-    }
-
-    [Benchmark]
-    public int[] InvokeFuncAllResults()
+    public int[] InvokeFuncLinq()
     {
         return funcDelegate!.GetInvocationList().Cast<Func<int>>().Select(x => x.Invoke()).ToArray();
     }
@@ -63,23 +58,5 @@ public class MulticastFuncBenchmark
     public ReadOnlySpan<int> InvokeMulticastFuncWithBuffer()
     {
         return multicastFunc!.Invoke(bufferWriter.GetSpan(multicastFunc!.Count));
-    }
-
-    public void ModifyFuncDelegate()
-    {
-        for (int i = 0; i < InvocationCount; i++)
-        {
-            funcDelegate += Method;
-            funcDelegate -= Method;
-        }
-    }
-
-    public void ModifyMulticastFunc()
-    {
-        for (int i = 0; i < InvocationCount; i++)
-        {
-            multicastFunc += Method;
-            multicastFunc -= Method;
-        }
     }
 }

@@ -18,7 +18,7 @@ namespace MulticastFunc
             return a;
         }
 
-        public static MulticastFunc<T1, T2, TResult>? operator -(MulticastFunc<T1, T2, TResult> a, Func<T1, T2, TResult> b)
+        public static MulticastFunc<T1, T2, TResult>? operator -(MulticastFunc<T1, T2, TResult>? a, Func<T1, T2, TResult> b)
         {
             a?.Remove(b);
             if (a != null && a.Count == 0)
