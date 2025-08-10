@@ -12,6 +12,7 @@ public class MulticastFuncBenchmark
     MulticastFunc<int>? multicastFunc;
     readonly ArrayBufferWriter<int> bufferWriter = new(InvocationCount);
     static int Method() => 42;
+    readonly Exception InvalidResultsException = new Exception("Invalid results produced.");
 
     public const int InvocationCount = 20;
 
@@ -45,18 +46,27 @@ public class MulticastFuncBenchmark
     [Benchmark]
     public int[] InvokeFuncLinq()
     {
-        return funcDelegate!.GetInvocationList().Cast<Func<int>>().Select(x => x.Invoke()).ToArray();
+        var results = funcDelegate!.GetInvocationList().Cast<Func<int>>().Select(x => x.Invoke()).ToArray();
+        if (results.Length != InvocationCount)
+            throw InvalidResultsException;
+        return results;
     }
 
     [Benchmark(Baseline = true)]
     public int[] InvokeMulticastFunc()
     {
-        return multicastFunc!.Invoke();
+        var results = multicastFunc!.Invoke();
+        if (results.Length != InvocationCount)
+            throw InvalidResultsException;
+        return results;
     }
 
     [Benchmark]
     public ReadOnlySpan<int> InvokeMulticastFuncWithBuffer()
     {
-        return multicastFunc!.Invoke(bufferWriter.GetSpan(multicastFunc!.Count));
+        var results = multicastFunc!.Invoke(bufferWriter.GetSpan(multicastFunc!.Count));
+        if (results.Length != InvocationCount)
+            throw InvalidResultsException;
+        return results;
     }
 }
