@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
 using MulticastFunc;
 using System.Buffers;
 
@@ -8,16 +7,15 @@ namespace MulticastFuncBenchmark;
 [MemoryDiagnoser]
 public class MulticastFuncBenchmark
 {
-    Func<int>? funcDelegate;
-    MulticastFunc<int>? multicastFunc;
+    readonly Func<int>? funcDelegate;
+    readonly MulticastFunc<int>? multicastFunc;
     readonly ArrayBufferWriter<int> bufferWriter = new(InvocationCount);
-    static int Method() => 42;
+    static int Method() => 0;
     readonly Exception InvalidResultsException = new Exception("Invalid results produced.");
 
-    public const int InvocationCount = 20;
+    public const int InvocationCount = 25;
 
-    [GlobalSetup]
-    public void Setup()
+    public MulticastFuncBenchmark()
     {
         funcDelegate = BuildFuncDelegate();
         multicastFunc = BuildMulticastFunc();

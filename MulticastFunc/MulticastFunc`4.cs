@@ -1,119 +1,90 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace MulticastFunc
 {
-    public class MulticastFunc<T1, T2, T3, T4, TResult>
+    public class MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>
     {
-        readonly List<Func<T1, T2, T3, T4, TResult>> funcs = new List<Func<T1, T2, T3, T4, TResult>>();
-
-        public int Count => funcs.Count;
-
-        public static MulticastFunc<T1, T2, T3, T4, TResult> operator +(MulticastFunc<T1, T2, T3, T4, TResult>? a, Func<T1, T2, T3, T4, TResult> b)
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult> operator +(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? a, MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult> b)
         {
-            a ??= new MulticastFunc<T1, T2, T3, T4, TResult>();
-            a.Add(b);
-            if (a.Count == 0)
-                return null!;
-            return a;
+            if (b == null)
+                return a!;
+            if (a == null)
+                return b;
+            return a.Combine(b.delegates);
         }
 
-        public static MulticastFunc<T1, T2, T3, T4, TResult>? operator -(MulticastFunc<T1, T2, T3, T4, TResult>? a, Func<T1, T2, T3, T4, TResult> b)
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult> operator +(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? a, Func<TArg1, TArg2, TArg3, TArg4, TResult> b)
         {
-            a?.Remove(b);
-            if (a != null && a.Count == 0)
-                return null;
-            return a;
+            if (b == null)
+                return a!;
+            if (a == null)
+                return b;
+            return a.Combine(b.GetInvocationList());
         }
 
-        public static implicit operator MulticastFunc<T1, T2, T3, T4, TResult>(Func<T1, T2, T3, T4, TResult> f) => new MulticastFunc<T1, T2, T3, T4, TResult>(f);
-
-        public static explicit operator Func<T1, T2, T3, T4, TResult>?(MulticastFunc<T1, T2, T3, T4, TResult>? m)
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? operator -(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? a, MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult> b)
         {
-            Func<T1, T2, T3, T4, TResult>? f = default;
-            if (m != null)
+            if (b == null)
+                return a;
+            return a?.Remove(b.delegates);
+        }
+
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? operator -(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? a, Func<TArg1, TArg2, TArg3, TArg4, TResult> b)
+        {
+            if (b == null)
+                return a;
+            return a?.Remove(b.GetInvocationList());
+        }
+
+        public static implicit operator MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>(Func<TArg1, TArg2, TArg3, TArg4, TResult> f) => new MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>(f.GetInvocationList());
+
+        public static explicit operator Func<TArg1, TArg2, TArg3, TArg4, TResult>(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult> m)
+        {
+            var dels = m.delegates;
+            Func<TArg1, TArg2, TArg3, TArg4, TResult>? result = default;
+            for (int i = 0; i < dels.Length; i++)
             {
-                foreach (var func in m.funcs)
-                {
-                    f += func;
-                }
+                result += (Func<TArg1, TArg2, TArg3, TArg4, TResult>)dels[i];
             }
-            return f;
+            return result!;
         }
 
-        public MulticastFunc(Func<T1, T2, T3, T4, TResult> func) => Add(func);
-        private MulticastFunc() { }
+        private MulticastFunc(Delegate[] del)
+        {
+            delegates = del;
+        }
 
-        public TResult[] Invoke(T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+        public TResult[] Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4)
         {
             var results = new TResult[Count];
             Invoke(arg1, arg2, arg3, arg4, results);
             return results;
         }
 
-        public ReadOnlySpan<TResult> Invoke(T1 arg1, T2 arg2, T3 arg3, T4 arg4, Span<TResult> buffer)
+        public Span<TResult> Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, Span<TResult> buffer)
         {
-            var count = funcs.Count;
-            if (buffer.Length < count)
+            var length = delegates.Length;
+            if (buffer.Length < length)
                 throw new ArgumentException("Buffer is too small", nameof(buffer));
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < length; i++)
             {
-                buffer[i] = funcs[i](arg1, arg2, arg3, arg4);
+                var func = (Func<TArg1, TArg2, TArg3, TArg4, TResult>)delegates[i];
+                buffer[i] = func(arg1, arg2, arg3, arg4);
             }
-            return buffer[..count];
+            return buffer[..length];
         }
 
-        private void Add(Func<T1, T2, T3, T4, TResult> func)
+        private MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult> Combine(Delegate[] functions)
+            => new MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>(delegates.Combine(functions));
+
+        private MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>? Remove(Delegate[] functions)
         {
-            if (func == null) return;
-            var functions = func.GetInvocationList();
-            foreach (var function in functions)
-            {
-                funcs.Add((Func<T1, T2, T3, T4, TResult>)function);
-            }
+            var results = delegates.Remove(functions);
+            return results == null ? null : new MulticastFunc<TArg1, TArg2, TArg3, TArg4, TResult>(results);
         }
 
-        private void Remove(Func<T1, T2, T3, T4, TResult> func)
-        {
-            if (func == null) return;
-            var removals = func.GetInvocationList();
+        public int Count => delegates.Length;
 
-            // Remove removals from the list of funcs using two pointer method
-            int freeIndex = 0;   // the first free slot in items array
-            int removalsCount = removals.Length;    // the number of items to remove
-
-            // Return true if item is in removals
-            bool Match(Delegate item)
-            {
-                int index = Array.IndexOf(removals, item, 0, removalsCount);
-                if (index != -1)
-                {
-                    // avoid removing the same item twice
-                    removals[index] = removals[--removalsCount];
-                    return true;
-                }
-                return false;
-            }
-
-            // Find the first item which needs to be removed
-            while (freeIndex < funcs.Count && !Match(funcs[freeIndex])) freeIndex++;
-            if (freeIndex >= funcs.Count) return;
-
-            int current = freeIndex + 1;
-            while (current < funcs.Count)
-            {
-                // Find the first item which needs to be kept
-                while (current < funcs.Count && Match(funcs[current])) current++;
-
-                if (current < funcs.Count)
-                {
-                    // copy item to the free slot
-                    funcs[freeIndex++] = funcs[current++];
-                }
-            }
-
-            funcs.RemoveRange(freeIndex, funcs.Count - freeIndex);
-            return;
-        }
+        private readonly Delegate[] delegates;
     }
 }

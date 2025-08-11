@@ -103,6 +103,9 @@ namespace MulticastFuncTests
             MulticastFunc<int>? multicast = func;   // output: 41, 42, 43, 44
             multicast += func5; // output: 41, 42, 43, 44, 45
             multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke()[0]);
+
             multicast += func;  // output: 45, 41, 42, 43, 44
             multicast -= func1; // output: 45, 42, 43, 44
 
@@ -133,6 +136,9 @@ namespace MulticastFuncTests
             MulticastFunc<int, int>? multicast = func;   // output: 41, 42, 43, 44
             multicast += func5; // output: 41, 42, 43, 44, 45
             multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default)[0]);
+
             multicast += func;  // output: 45, 41, 42, 43, 44
             multicast -= func1; // output: 45, 42, 43, 44
 
@@ -162,6 +168,9 @@ namespace MulticastFuncTests
             MulticastFunc<int, int, int>? multicast = func;   // output: 41, 42, 43, 44
             multicast += func5; // output: 41, 42, 43, 44, 45
             multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default)[0]);
+
             multicast += func;  // output: 45, 41, 42, 43, 44
             multicast -= func1; // output: 45, 42, 43, 44
 
@@ -192,6 +201,9 @@ namespace MulticastFuncTests
             MulticastFunc<int, int, int, int>? multicast = func;   // output: 41, 42, 43, 44
             multicast += func5; // output: 41, 42, 43, 44, 45
             multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default, default)[0]);
+
             multicast += func;  // output: 45, 41, 42, 43, 44
             multicast -= func1; // output: 45, 42, 43, 44
 
@@ -222,6 +234,9 @@ namespace MulticastFuncTests
             MulticastFunc<int, int, int, int, int>? multicast = func;   // output: 41, 42, 43, 44
             multicast += func5; // output: 41, 42, 43, 44, 45
             multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default, default, default)[0]);
+
             multicast += func;  // output: 45, 41, 42, 43, 44
             multicast -= func1; // output: 45, 42, 43, 44
 
@@ -252,6 +267,9 @@ namespace MulticastFuncTests
             MulticastFunc<int, int, int, int, int, int>? multicast = func;   // output: 41, 42, 43, 44
             multicast += func5; // output: 41, 42, 43, 44, 45
             multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default, default, default, default)[0]);
+
             multicast += func;  // output: 45, 41, 42, 43, 44
             multicast -= func1; // output: 45, 42, 43, 44
 
