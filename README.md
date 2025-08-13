@@ -12,7 +12,7 @@ You can create an extension method to avoid typing all of that everytime. Howeve
 `MulticastFunc` solves this problem by making `Invoke` return an array of results while keeping the invocation process [fast](#Benchmarks).
 
 # Usage
-`MulticastFunc` behaves similarly to a `Func`. The usage is mostly the same.</br>
+`MulticastFunc` behaves similarly to a `Func`. The usage is largely the same.</br>
 
 Adding and removing invocations:
 ```csharp
