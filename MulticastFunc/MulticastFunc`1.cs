@@ -4,7 +4,7 @@ namespace MulticastFunc
 {
     public class MulticastFunc<TArg1, TResult>
     {
-        public static MulticastFunc<TArg1, TResult> operator +(MulticastFunc<TArg1, TResult>? a, MulticastFunc<TArg1, TResult> b)
+        public static MulticastFunc<TArg1, TResult> operator +(MulticastFunc<TArg1, TResult>? a, MulticastFunc<TArg1, TResult>? b)
         {
             if (b == null)
                 return a!;
@@ -13,7 +13,7 @@ namespace MulticastFunc
             return a.Combine(b.delegates);
         }
 
-        public static MulticastFunc<TArg1, TResult> operator +(MulticastFunc<TArg1, TResult>? a, Func<TArg1, TResult> b)
+        public static MulticastFunc<TArg1, TResult> operator +(MulticastFunc<TArg1, TResult>? a, Func<TArg1, TResult>? b)
         {
             if (b == null)
                 return a!;
@@ -22,14 +22,14 @@ namespace MulticastFunc
             return a.Combine(b.GetInvocationList());
         }
 
-        public static MulticastFunc<TArg1, TResult>? operator -(MulticastFunc<TArg1, TResult>? a, MulticastFunc<TArg1, TResult> b)
+        public static MulticastFunc<TArg1, TResult>? operator -(MulticastFunc<TArg1, TResult>? a, MulticastFunc<TArg1, TResult>? b)
         {
             if (b == null)
                 return a;
             return a?.Remove(b.delegates);
         }
 
-        public static MulticastFunc<TArg1, TResult>? operator -(MulticastFunc<TArg1, TResult>? a, Func<TArg1, TResult> b)
+        public static MulticastFunc<TArg1, TResult>? operator -(MulticastFunc<TArg1, TResult>? a, Func<TArg1, TResult>? b)
         {
             if (b == null)
                 return a;
