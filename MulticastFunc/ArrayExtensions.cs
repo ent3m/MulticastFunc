@@ -25,11 +25,19 @@ namespace MulticastFunc
         /// <summary>
         /// Remove the content of B from A without modifying A or B and return the result.
         /// </summary>
-        internal static T[]? Remove<T>(this T[] A, T[] B)
+        internal static T[]? Remove<T>(this T[] A, T[] B, bool canMutateB)
         {
             var pool = ArrayPool<T>.Shared;
-            var removals = pool.Rent(B.Length);
-            B.CopyTo(removals, 0);
+            T[] removals;
+            if (canMutateB)
+            {
+                removals = B;
+            }
+            else
+            {
+                removals = pool.Rent(B.Length);
+                B.CopyTo(removals, 0);
+            }
             int removalCount = removals.Length;
 
             var buffer = pool.Rent(A.Length);
@@ -48,8 +56,9 @@ namespace MulticastFunc
 
             var result = new T[length];
             Array.Copy(buffer, result, length);
-            pool.Return(removals);
             pool.Return(buffer);
+            if (!canMutateB)
+                pool.Return(removals);
             return result;
         }
     }

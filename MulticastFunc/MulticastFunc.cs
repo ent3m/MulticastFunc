@@ -26,14 +26,14 @@ namespace MulticastFunc
         {
             if (b == null)
                 return a;
-            return a?.Remove(b.delegates);
+            return a?.Remove(b.delegates, false);
         }
 
         public static MulticastFunc<TResult>? operator -(MulticastFunc<TResult>? a, Func<TResult>? b)
         {
             if (b == null)
                 return a;
-            return a?.Remove(b.GetInvocationList());
+            return a?.Remove(b.GetInvocationList(), true);
         }
 
         public static implicit operator MulticastFunc<TResult>(Func<TResult> f) => new MulticastFunc<TResult>(f.GetInvocationList());
@@ -61,7 +61,7 @@ namespace MulticastFunc
             return results;
         }
 
-        public Span<TResult> Invoke(Span<TResult> buffer)
+        public ReadOnlySpan<TResult> Invoke(Span<TResult> buffer)
         {
             var length = delegates.Length;
             if (buffer.Length < length)
@@ -77,9 +77,9 @@ namespace MulticastFunc
         private MulticastFunc<TResult> Combine(Delegate[] functions)
             => new MulticastFunc<TResult>(delegates.Combine(functions));
 
-        private MulticastFunc<TResult>? Remove(Delegate[] functions)
+        private MulticastFunc<TResult>? Remove(Delegate[] functions, bool canMutateFunctions)
         {
-            var results = delegates.Remove(functions);
+            var results = delegates.Remove(functions, canMutateFunctions);
             return results == null ? null : new MulticastFunc<TResult>(results);
         }
 
