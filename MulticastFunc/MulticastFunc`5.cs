@@ -1,52 +1,73 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MulticastFunc
 {
     public class MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>
     {
-        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> operator +(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? a, MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> operator +(
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> a,
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> b)
         {
             if (b == null)
-                return a!;
+                return a;
             if (a == null)
                 return b;
             return a.Combine(b.delegates);
         }
 
-        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> operator +(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? a, Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> operator +(
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> a,
+            [AllowNull] Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> b)
         {
             if (b == null)
-                return a!;
+                return a;
             if (a == null)
                 return b;
             return a.Combine(b.GetInvocationList());
         }
 
-        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? operator -(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? a, MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> operator -(
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> a,
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> b)
         {
             if (b == null)
                 return a;
             return a?.Remove(b.delegates, false);
         }
 
-        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? operator -(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? a, Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> operator -(
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> a,
+            [AllowNull] Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> b)
         {
             if (b == null)
                 return a;
             return a?.Remove(b.GetInvocationList(), true);
         }
 
-        public static implicit operator MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> f) => new MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(f.GetInvocationList());
+        [return: MaybeNull]
+        public static implicit operator MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(
+            [AllowNull] Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> f) 
+            => f == null ? null : new MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(f.GetInvocationList());
 
-        public static explicit operator Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> m)
+        [return: MaybeNull]
+        public static explicit operator Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(
+            [AllowNull] MulticastFunc<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> m)
         {
+            if (m == null)
+                return null;
+
             var dels = m.delegates;
             Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>? result = default;
             for (int i = 0; i < dels.Length; i++)
             {
                 result += (Func<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>)dels[i];
             }
-            return result!;
+            return result;
         }
 
         private MulticastFunc(Delegate[] del)

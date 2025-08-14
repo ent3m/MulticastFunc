@@ -1,52 +1,73 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MulticastFunc
 {
     public class MulticastFunc<TResult>
     {
-        public static MulticastFunc<TResult> operator +(MulticastFunc<TResult>? a, MulticastFunc<TResult>? b)
+        [return : MaybeNull]
+        public static MulticastFunc<TResult> operator +(
+            [AllowNull] MulticastFunc<TResult> a,
+            [AllowNull] MulticastFunc<TResult> b)
         {
             if (b == null)
-                return a!;
+                return a;
             if (a == null)
                 return b;
             return a.Combine(b.delegates);
         }
 
-        public static MulticastFunc<TResult> operator +(MulticastFunc<TResult>? a, Func<TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TResult> operator +(
+            [AllowNull] MulticastFunc<TResult> a,
+            [AllowNull] Func<TResult> b)
         {
             if (b == null)
-                return a!;
+                return a;
             if (a == null)
                 return b;
             return a.Combine(b.GetInvocationList());
         }
 
-        public static MulticastFunc<TResult>? operator -(MulticastFunc<TResult>? a, MulticastFunc<TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TResult> operator -(
+            [AllowNull] MulticastFunc<TResult> a,
+            [AllowNull] MulticastFunc<TResult> b)
         {
             if (b == null)
                 return a;
             return a?.Remove(b.delegates, false);
         }
 
-        public static MulticastFunc<TResult>? operator -(MulticastFunc<TResult>? a, Func<TResult>? b)
+        [return: MaybeNull]
+        public static MulticastFunc<TResult> operator -(
+            [AllowNull] MulticastFunc<TResult> a,
+            [AllowNull] Func<TResult> b)
         {
             if (b == null)
                 return a;
             return a?.Remove(b.GetInvocationList(), true);
         }
 
-        public static implicit operator MulticastFunc<TResult>(Func<TResult> f) => new MulticastFunc<TResult>(f.GetInvocationList());
+        [return: MaybeNull]
+        public static implicit operator MulticastFunc<TResult>(
+            [AllowNull] Func<TResult> f)
+            => f == null ? null : new MulticastFunc<TResult>(f.GetInvocationList());
 
-        public static explicit operator Func<TResult>(MulticastFunc<TResult> m)
+        [return: MaybeNull]
+        public static explicit operator Func<TResult>(
+            [AllowNull] MulticastFunc<TResult> m)
         {
+            if (m == null)
+                return null;
+
             var dels = m.delegates;
             Func<TResult>? result = default;
             for (int i = 0; i < dels.Length; i++)
             {
                 result += (Func<TResult>)dels[i];
             }
-            return result!;
+            return result;
         }
 
         private MulticastFunc(Delegate[] del)
