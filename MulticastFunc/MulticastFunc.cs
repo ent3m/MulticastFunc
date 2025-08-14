@@ -6,6 +6,8 @@ namespace MulticastFunc
     public class MulticastFunc<TResult>
     {
         [return : MaybeNull]
+        [return: NotNullIfNotNull(nameof(a))]
+        [return: NotNullIfNotNull(nameof(b))]
         public static MulticastFunc<TResult> operator +(
             [AllowNull] MulticastFunc<TResult> a,
             [AllowNull] MulticastFunc<TResult> b)
@@ -18,6 +20,8 @@ namespace MulticastFunc
         }
 
         [return: MaybeNull]
+        [return: NotNullIfNotNull(nameof(a))]
+        [return: NotNullIfNotNull(nameof(b))]
         public static MulticastFunc<TResult> operator +(
             [AllowNull] MulticastFunc<TResult> a,
             [AllowNull] Func<TResult> b)
@@ -50,11 +54,13 @@ namespace MulticastFunc
         }
 
         [return: MaybeNull]
+        [return: NotNullIfNotNull(nameof(f))]
         public static implicit operator MulticastFunc<TResult>(
             [AllowNull] Func<TResult> f)
             => f == null ? null : new MulticastFunc<TResult>(f.GetInvocationList());
 
         [return: MaybeNull]
+        [return: NotNullIfNotNull(nameof(m))]
         public static explicit operator Func<TResult>(
             [AllowNull] MulticastFunc<TResult> m)
         {
@@ -67,7 +73,7 @@ namespace MulticastFunc
             {
                 result += (Func<TResult>)dels[i];
             }
-            return result;
+            return result!;
         }
 
         private MulticastFunc(Delegate[] del)
