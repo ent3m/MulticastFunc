@@ -7,7 +7,7 @@ The code looks like this with LINQ:
 ```csharp
 T[]? results = myDelegate?.GetInvocationList().Cast<Func<T>>().Select(f => f.Invoke()).ToArray();
 ```
-You can create an extension method to avoid typing all of that everytime. However, the allocation cost of `GetInvocationList` *cannot* be avoided. Invoking a `Func<T>` or other MulticastDelegates this way is slow and generates a lot of garbage over time.</br></br>
+You can create an extension method to avoid typing that everytime. However, the allocation cost of `GetInvocationList` *cannot* be avoided. Invoking a `Func<T>` or other MulticastDelegates this way is slow and generates a lot of garbage over time.</br></br>
 
 `MulticastFunc` solves this problem by making `Invoke` return an array of results while keeping the invocation process [fast](#Benchmarks).
 
