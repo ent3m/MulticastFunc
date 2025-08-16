@@ -300,5 +300,68 @@ namespace MulticastFuncTests
             Assert.AreEqual(42, buffer[1]);
             Assert.AreEqual(42, buffer[2]);
         }
+
+        [TestMethod]
+        public void Invoke_Buffer()
+        {
+            static int func() => 42;
+
+            // create a MulticastFunc with 3 functions that return 42
+            MulticastFunc<int>? multicast = null;
+            multicast += func;
+            multicast += func;
+            multicast += func;
+
+            // create a buffer large enough to store the results
+            int[] buffer = new int[multicast.Count];
+            var written = multicast.Invoke(buffer);
+
+            // the buffer should contain 3 results: 42, 42, 42
+            Assert.AreEqual(3, written);
+            Assert.AreEqual(42, buffer[0]);
+            Assert.AreEqual(42, buffer[1]);
+            Assert.AreEqual(42, buffer[2]);
+        }
+
+        [TestMethod]
+        public void Equals_Override()
+        {
+            static int func1() => 42;
+            static int func2() => 16;
+
+            Func<int>? func = null;
+            func += func1;
+
+            MulticastFunc<int>? multicast1 = null;
+            multicast1 += func1;
+
+            MulticastFunc<int>? multicast2 = null;
+            multicast2 += func1;
+
+            MulticastFunc<int>? multicast3 = null;
+            multicast3 += func1;
+            multicast3 += func1;
+
+            MulticastFunc<int>? multicast4 = null;
+            multicast4 += func1;
+            multicast4 += func1;
+
+            MulticastFunc<int>? multicast5 = null;
+            multicast5 += func1;
+            multicast5 += func2;
+
+            // true because it should equal itself
+            Assert.IsTrue(multicast1.Equals(multicast1));
+            // false because of type difference
+            Assert.IsFalse(multicast1.Equals(func));
+            // true because content are the same
+            Assert.IsTrue(multicast1.Equals(multicast2));
+            // false because of different length and content
+            Assert.IsFalse(multicast2.Equals(multicast3));
+            // true because content are the same
+            Assert.IsTrue(multicast3.Equals(multicast4));
+            // false because of different content
+            Assert.IsFalse(multicast4.Equals(multicast5));
+        }
     }
 }
