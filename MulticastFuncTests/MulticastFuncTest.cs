@@ -280,6 +280,102 @@ namespace MulticastFuncTests
         }
 
         [TestMethod]
+        public void Invoke_CallsAllFunctions6Arg()
+        {
+            static int func1(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) => 41;
+            static int func2(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) => 42;
+            static int func3(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) => 43;
+            static int func4(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) => 44;
+            static int func5(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) => 45;
+
+            // create a delegate with 4 functions
+            Func<int, int, int, int, int, int, int>? func = null;
+            func += func1;
+            func += func2;
+            func += func3;
+            func += func4;
+
+            // create a MulticastFunc
+            MulticastFunc<int, int, int, int, int, int, int>? multicast = func;   // output: 41, 42, 43, 44
+            multicast += func5; // output: 41, 42, 43, 44, 45
+            multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default, default, default, default, default)[0]);
+
+            multicast += func;  // output: 45, 41, 42, 43, 44
+            multicast -= func1; // output: 45, 42, 43, 44
+
+            var results = multicast!.Invoke(default, default, default, default, default, default);
+
+            // there should be 4 functions left, producing output: 45, 42, 43, 44
+            CollectionAssert.AreEquivalent(expected, results);
+        }
+
+        [TestMethod]
+        public void Invoke_CallsAllFunctions7Arg()
+        {
+            static int func1(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) => 41;
+            static int func2(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) => 42;
+            static int func3(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) => 43;
+            static int func4(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) => 44;
+            static int func5(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7) => 45;
+
+            // create a delegate with 4 functions
+            Func<int, int, int, int, int, int, int, int>? func = null;
+            func += func1;
+            func += func2;
+            func += func3;
+            func += func4;
+
+            // create a MulticastFunc
+            MulticastFunc<int, int, int, int, int, int, int, int>? multicast = func;   // output: 41, 42, 43, 44
+            multicast += func5; // output: 41, 42, 43, 44, 45
+            multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default, default, default, default, default, default)[0]);
+
+            multicast += func;  // output: 45, 41, 42, 43, 44
+            multicast -= func1; // output: 45, 42, 43, 44
+
+            var results = multicast!.Invoke(default, default, default, default, default, default, default);
+
+            // there should be 4 functions left, producing output: 45, 42, 43, 44
+            CollectionAssert.AreEquivalent(expected, results);
+        }
+
+        [TestMethod]
+        public void Invoke_CallsAllFunctions8Arg()
+        {
+            static int func1(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) => 41;
+            static int func2(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) => 42;
+            static int func3(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) => 43;
+            static int func4(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) => 44;
+            static int func5(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8) => 45;
+
+            // create a delegate with 4 functions
+            Func<int, int, int, int, int, int, int, int, int>? func = null;
+            func += func1;
+            func += func2;
+            func += func3;
+            func += func4;
+
+            // create a MulticastFunc
+            MulticastFunc<int, int, int, int, int, int, int, int, int>? multicast = func;   // output: 41, 42, 43, 44
+            multicast += func5; // output: 41, 42, 43, 44, 45
+            multicast -= func;  // output: 45
+
+            Assert.AreEqual(45, multicast!.Invoke(default, default, default, default, default, default, default, default)[0]);
+
+            multicast += func;  // output: 45, 41, 42, 43, 44
+            multicast -= func1; // output: 45, 42, 43, 44
+
+            var results = multicast!.Invoke(default, default, default, default, default, default, default, default);
+
+            // there should be 4 functions left, producing output: 45, 42, 43, 44
+            CollectionAssert.AreEquivalent(expected, results);
+        }
+
+        [TestMethod]
         public void Invoke_SpanBuffer()
         {
             static int func() => 42;
