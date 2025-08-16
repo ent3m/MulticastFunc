@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MulticastFunc
 {
-    public class MulticastFunc<TArg1, TArg2, TArg3, TResult>
+    public sealed class MulticastFunc<TArg1, TArg2, TArg3, TResult>
     {
         [return: MaybeNull]
         [return: NotNullIfNotNull(nameof(a))]
@@ -76,30 +76,41 @@ namespace MulticastFunc
             return result!;
         }
 
-        private MulticastFunc(Delegate[] del)
-        {
-            delegates = del;
-        }
+        /// <summary>
+        /// The number of delegates this MulticastFunc is holding.
+        /// </summary>
+        public int Count => delegates.Length;
 
         public TResult[] Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3)
         {
             var results = new TResult[Count];
-            Invoke(arg1, arg2, arg3, results);
+            FillBuffer(arg1, arg2, arg3, results);
             return results;
         }
 
-        public ReadOnlySpan<TResult> Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, Span<TResult> buffer)
+        public int Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TResult[] buffer)
+            => FillBuffer(arg1, arg2, arg3, buffer);
+
+        public ReadOnlySpan<TResult> Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, Span<TResult> spanBuffer)
         {
-            var length = delegates.Length;
-            if (buffer.Length < length)
-                throw new ArgumentException("Buffer is too small", nameof(buffer));
-            for (int i = 0; i < length; i++)
-            {
-                var func = (Func<TArg1, TArg2, TArg3, TResult>)delegates[i];
-                buffer[i] = func(arg1, arg2, arg3);
-            }
-            return buffer[..length];
+            var length = FillBuffer(arg1, arg2, arg3, spanBuffer);
+            return spanBuffer[..length];
         }
+
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            if (obj == null)
+                return false;
+            if (ReferenceEquals(this, obj))
+                return true;
+            if (!(obj is MulticastFunc<TArg1, TArg2, TArg3, TResult> m))
+                return false;
+
+            return delegates.ArrayEqual(m.delegates);
+        }
+
+        public override int GetHashCode()
+            => delegates.GetArrayHash();
 
         private MulticastFunc<TArg1, TArg2, TArg3, TResult> Combine(Delegate[] functions)
             => new MulticastFunc<TArg1, TArg2, TArg3, TResult>(delegates.Combine(functions));
@@ -110,8 +121,24 @@ namespace MulticastFunc
             return results == null ? null : new MulticastFunc<TArg1, TArg2, TArg3, TResult>(results);
         }
 
-        public int Count => delegates.Length;
+        private int FillBuffer(TArg1 arg1, TArg2 arg2, TArg3 arg3, Span<TResult> buffer)
+        {
+            var length = delegates.Length;
+            if (buffer.Length < length)
+                throw new ArgumentException("Buffer is too small", nameof(buffer));
+            for (int i = 0; i < length; i++)
+            {
+                var func = (Func<TArg1, TArg2, TArg3, TResult>)delegates[i];
+                buffer[i] = func(arg1, arg2, arg3);
+            }
+            return length;
+        }
 
         private readonly Delegate[] delegates;
+
+        private MulticastFunc(Delegate[] del)
+        {
+            delegates = del;
+        }
     }
 }
