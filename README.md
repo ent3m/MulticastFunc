@@ -12,8 +12,6 @@ You can create an extension method to avoid typing that everytime. However, the 
 `MulticastFunc` solves this problem by having `Invoke` return an array of results without compromising on [performance](#Benchmarks). In addition, it behaves similarly to a delegate with its immutability and add/remove syntax, making it a suitable replacement for any `Func` delegate.
 
 # Usage
-Using `MulticastFunc` is nearly the same as `Func`.</br>
-
 Adding and removing functions:
 ```csharp
 multicastFunc += MyMethod;
