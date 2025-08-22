@@ -12,7 +12,7 @@ You can create an extension method to avoid typing that everytime. However, the 
 `MulticastFunc` solves this problem by having `Invoke` return an array of results without compromising on [performance](#Benchmarks). In addition, it behaves similarly to a delegate with its immutability and add/remove syntax, making it a suitable replacement for any `Func` delegate.
 
 # Usage
-Adding and removing functions:
+Adding and removing:
 ```csharp
 multicastFunc += MyMethod;
 multicastFunc += () => "Hello World";
