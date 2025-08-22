@@ -37,7 +37,7 @@ public event Func<string> EventHappened
 private MulticastFunc<string>? multicastFunc = default;
 ```
 
-Query function count:
+Get delegate count:
 ```csharp
 int count = multicastFunc.Count;
 ```
