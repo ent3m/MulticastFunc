@@ -9,7 +9,7 @@ T[]? results = myDelegate?.GetInvocationList().Cast<Func<T>>().Select(f => f.Inv
 ```
 You can create an extension method to avoid typing that everytime. However, the allocation cost of `GetInvocationList` *cannot* be avoided. Invoking a `Func<T>` or other MulticastDelegates this way is slow and generates a lot of garbage over time.</br></br>
 
-`MulticastFunc` solves this problem by making `Invoke` return an array of results while keeping the invocation process [fast](#Benchmarks).
+`MulticastFunc` solves this problem by having `Invoke` return an array of results without compromising on [performance](#Benchmarks). In addition, it behaves similarly to a delegate with its immutability and add/remove syntax, making it a suitable replacement for any `Func` delegate.
 
 # Usage
 `MulticastFunc` behaves similarly to a `Func`. The usage is nearly the same.</br>
@@ -27,7 +27,7 @@ Invoking:
 T[]? results = multicastFunc?.Invoke();
 ```
 
-Use as a backing field for event:
+Use as a backing field for events:
 ```csharp
 public event Func<string> EventHappened
 {
