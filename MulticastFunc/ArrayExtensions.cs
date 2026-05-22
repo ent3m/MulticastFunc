@@ -1,102 +1,96 @@
 ﻿using System;
-using System.Buffers;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MulticastFunc
 {
-    // Methods in this class are implemented as generic because the backing type of MulticastFunc may change in the future.
     internal static class ArrayExtensions
     {
         /// <summary>
-        /// Combine the content of A and B without modifying A or B and return the result.
+        /// Remove B from A and return the result, matching <see cref="Delegate.Remove"/> behavior exactly:
+        /// finds the last contiguous subsequence of A that equals B and removes it.
+        /// Returns null if A and B are equal. Returns A if B is not found.
         /// </summary>
-        internal static T[] Combine<T>(this T[] A, T[] B)
+        internal static T[]? Remove<T>(this T[] a, T[] b) where T : notnull
         {
-            T[] result = new T[A.Length + B.Length];
-            Array.Copy(A, 0, result, 0, A.Length);
-            Array.Copy(B, 0, result, A.Length, B.Length);
-            return result;
+            if (b.Length == 0)
+                return a;
+
+            // Fast path: removing a single item. Scan backward and remove the last occurrence.
+            if (b.Length == 1)
+            {
+                T item = b[0];
+                for (int i = a.Length - 1; i >= 0; i--)
+                {
+                    if (item.Equals(a[i]))
+                    {
+                        if (a.Length == 1)
+                            return null;
+
+                        T[] single = new T[a.Length - 1];
+                        Array.Copy(a, 0, single, 0, i);
+                        Array.Copy(a, i + 1, single, i, a.Length - i - 1);
+                        return single;
+                    }
+                }
+                return a;
+            }
+
+            // General path: scan backward for the last contiguous subsequence of A that equals B.
+            if (b.Length > a.Length)
+                return a;
+
+            for (int i = a.Length - b.Length; i >= 0; i--)
+            {
+                bool match = true;
+                for (int j = 0; j < b.Length; j++)
+                {
+                    if (!a[i + j].Equals(b[j]))
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match)
+                {
+                    int remaining = a.Length - b.Length;
+                    if (remaining == 0)
+                        return null;
+
+                    T[] result = new T[remaining];
+                    Array.Copy(a, 0, result, 0, i);
+                    Array.Copy(a, i + b.Length, result, i, a.Length - i - b.Length);
+                    return result;
+                }
+            }
+
+            return a;
         }
 
         /// <summary>
-        /// Remove the content of B from A without modifying A or B and return the result. Optionally, allow the mutation of B to reduce allocation.
+        /// Combine A and B and return the result.
         /// </summary>
-        internal static T[]? Remove<T>(this T[] A, T[] B, bool canMutateB)
+        internal static T[] Combine<T>(this T[] a, T[] b)
         {
-            var pool = ArrayPool<T>.Shared;
-
-            T[] removals;
-            if (canMutateB)
-            {
-                removals = B;
-            }
-            else
-            {
-                removals = pool.Rent(B.Length);
-                B.CopyTo(removals, 0);
-            }
-            int toRemove = removals.Length;
-
-            // Copy each item from A to a buffer, excluding those that exist in removals.
-            var buffer = pool.Rent(A.Length);
-            int written = 0;
-            for (int i = 0; i < A.Length; i++)
-            {
-                // Copy the remainder of A and return early if there's nothing left to remove.
-                if (toRemove == 0)
-                {
-                    var remainder = A.Length - i;
-                    Array.Copy(A, i, buffer, written, remainder);
-                    written += remainder;
-                    break;
-                }
-
-                var index = Array.IndexOf(removals, A[i], 0, toRemove);
-                if (index == -1)
-                    buffer[written++] = A[i];
-                // Avoid removing the same item twice.
-                else
-                    removals[index] = removals[--toRemove];
-            }
-
-            T[]? result;
-            // Return null if all items were removed.
-            if (written == 0)
-            {
-                result = null;
-            }
-            // Return A if nothing was removed.
-            else if (toRemove == removals.Length)
-            {
-                result = A;
-            }
-            else
-            {
-                result = new T[written];
-                Array.Copy(buffer, result, written);
-            }
-
-            pool.Return(buffer);
-            if (!canMutateB)
-                pool.Return(removals);
+            T[] result = new T[a.Length + b.Length];
+            Array.Copy(a, 0, result, 0, a.Length);
+            Array.Copy(b, 0, result, a.Length, b.Length);
             return result;
         }
 
         /// <summary>
         /// Compare the contents of two arrays. Return true if all contents are equal.
         /// </summary>
-        internal static bool ArrayEqual<T>(this T[] A, T[] B) where T : notnull
+        internal static bool ArrayEqual<T>(this T[] a, T[] b) where T : notnull
         {
-            int length = A.Length;
-            if (B.Length != length) 
+            int length = a.Length;
+            if (b.Length != length)
                 return false;
 
-            // Use the standard approach because we know the type being compared (a Delegate) is not bitwise equatable.
+            // Use the standard approach because we know the type being compared
+            // (a Delegate) is not bitwise equatable and cannot use vectorized comparisons.
             for (int i = 0; i < length; i++)
             {
-                if (!A[i].Equals(B[i]))
+                if (!a[i].Equals(b[i]))
                     return false;
             }
             return true;
@@ -105,17 +99,12 @@ namespace MulticastFunc
         /// <summary>
         /// Generate Hash based on the content of the array.
         /// </summary>
-        internal static int GetArrayHash<T>(this T[] A) where T : notnull
+        internal static int GetArrayHash<T>(this T[] a) where T : notnull
         {
-            int length = A.Length;
-            if (length == 1)
-                return A[0].GetHashCode();
-
-            // Apply the same algorithm as MulticastDelegate.
             int hash = 0;
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < a.Length; i++)
             {
-                hash = hash * 33 + A[i].GetHashCode();
+                hash = hash * 33 + a[i].GetHashCode();
             }
             return hash;
         }

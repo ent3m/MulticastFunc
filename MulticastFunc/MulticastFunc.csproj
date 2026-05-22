@@ -1,26 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-    <Authors>Entem</Authors>
-    <Company>Entem</Company>
-    <SignAssembly>False</SignAssembly>
-    <Title>MulticastFunc</Title>
-    <Description>Provide a simple way to get all the results from a multicast delegate.</Description>
-    <RepositoryUrl>https://github.com/ent3m/MulticastFunc</RepositoryUrl>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README-NUGET.md</PackageReadmeFile>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.4</Version>
+	<TargetFrameworks>netstandard2.1;net9.0</TargetFrameworks>
+	<Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+	<IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
+	<IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+	<PackageId>MulticastFunc</PackageId>
+	<Version>2.0.0</Version>
+	<Authors>ent3m</Authors>
+	<Title>MulticastFunc</Title>
+	<Description>A high-performance, drop-in alternative to Func that retrieves the return values of all invocations instead of only the final one.</Description>
+
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+	<PackageProjectUrl>https://github.com/ent3m/MulticastFunc</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/ent3m/MulticastFunc</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
+
+	<PackageReadmeFile>README-NUGET.md</PackageReadmeFile>
+	<PackageTags>delegate;multicast;performance</PackageTags>
+
+	<IncludeSymbols>true</IncludeSymbols>
+	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+	<PackageReleaseNotes>Refactor to improve performance, match Delegate logic, and introduce InvokeAll.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\README-NUGET.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+	<None Include="README-NUGET.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

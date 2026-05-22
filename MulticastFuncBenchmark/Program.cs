@@ -1,11 +1,12 @@
 ﻿using BenchmarkDotNet.Running;
 
-namespace MulticastFuncBenchmark;
-
-public class Program
+namespace MulticastFuncBenchmark
 {
-    static void Main()
+    public class Program
     {
-        _ = BenchmarkRunner.Run<MulticastFuncBenchmark>();
+        static void Main()
+        {
+            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAll();
+        }
     }
 }

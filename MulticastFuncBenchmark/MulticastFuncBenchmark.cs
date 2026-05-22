@@ -1,78 +1,76 @@
 ﻿using BenchmarkDotNet.Attributes;
 using MulticastFunc;
-using System.Buffers;
+using System;
+using System.Linq;
 
-namespace MulticastFuncBenchmark;
-
-[MemoryDiagnoser]
-[HideColumns("Error", "StdDev", "Median", "RatioSD", "Gen0")]
-public class MulticastFuncBenchmark
+namespace MulticastFuncBenchmark
 {
-    Func<int>? funcDelegate;
-    MulticastFunc<int>? multicastFunc;
-    readonly ArrayBufferWriter<int> bufferWriter = new ArrayBufferWriter<int>();
-    static int Method() => 1;
-
-    [Params(5, 25, 125)]
-    public int DelegateCount = 5;
-
-    [GlobalSetup]
-    public void BenchmarkSetup()
+    [MemoryDiagnoser]
+    [HideColumns("Error", "StdDev", "Median", "RatioSD", "Gen0")]
+    public class MulticastFuncBenchmark
     {
-        funcDelegate = BuildFunc();
-        multicastFunc = BuildMulticastFunc();
-    }
+        Func<int>? funcDelegate;
+        MulticastFunc<int>? multicastFunc;
+        int[]? spanBuffer;
+        static int Method() => 1;
 
-    [GlobalCleanup]
-    public void BenchmarkCleanup()
-    {
-        bufferWriter.Clear();
-    }
+        [Params(5, 25, 125)]
+        public int DelegateCount = 5;
 
-    public Func<int>? BuildFunc()
-    {
-        Func<int>? func = default;
-        for (int i = 0; i < DelegateCount; i++)
+        [GlobalSetup]
+        public void BenchmarkSetup()
         {
-            func += Method;
+            funcDelegate = BuildFunc();
+            multicastFunc = BuildMulticastFunc();
+            spanBuffer = new int[DelegateCount];
         }
-        return func;
-    }
 
-    public MulticastFunc<int>? BuildMulticastFunc()
-    {
-        MulticastFunc<int>? func = default;
-        for (int i = 0; i < DelegateCount; i++)
+        private Func<int>? BuildFunc()
         {
-            func += Method;
+            Func<int>? func = default;
+            for (int i = 0; i < DelegateCount; i++)
+            {
+                func += Method;
+            }
+            return func;
         }
-        return func;
-    }
 
-    [Benchmark]
-    public int[] Invoke_Func_Linq()
-    {
-        var results = funcDelegate!.GetInvocationList().Cast<Func<int>>().Select(x => x.Invoke()).ToArray();
-        return results;
-    }
+        private MulticastFunc<int>? BuildMulticastFunc()
+        {
+            MulticastFunc<int>? func = default;
+            for (int i = 0; i < DelegateCount; i++)
+            {
+                func += Method;
+            }
+            return func;
+        }
 
-    [Benchmark]
-    public int Invoke_Func()
-    {
-        return funcDelegate!.Invoke();
-    }
+        [Benchmark]
+        public int[] Invoke_MulticastFunc()
+        {
+            return multicastFunc!.Invoke();
+        }
 
-    [Benchmark (Baseline = true)]
-    public int[] Invoke_MulticastFunc()
-    {
-        var results = multicastFunc!.Invoke();
-        return results;
-    }
+        [Benchmark]
+        public ReadOnlySpan<int> Invoke_MulticastFunc_SpanBuffer()
+        {
+            return multicastFunc!.Invoke(spanBuffer);
+        }
 
-    [Benchmark]
-    public ReadOnlySpan<int> Invoke_MulticastFunc_SpanBuffer()
-    {
-        var results = multicastFunc!.Invoke(bufferWriter.GetSpan(multicastFunc!.Count));
-        return results;
+        /// <summary>
+        /// Baseline: invokes all delegates but discards all results except the last.
+        /// Included to show the cost of the raw dispatch loop with no result collection.
+        /// </summary>
+        [Benchmark(Baseline = true)]
+        public int Invoke_Func_LastResultOnly()
+        {
+            return funcDelegate!.Invoke();
+        }
+
+        [Benchmark]
+        public int[] Invoke_Func_Linq()
+        {
+            return funcDelegate!.GetInvocationList().Cast<Func<int>>().Select(x => x.Invoke()).ToArray();
+        }
     }
 }
