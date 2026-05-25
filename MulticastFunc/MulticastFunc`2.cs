@@ -4,9 +4,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MulticastFunc
 {
+    /// <inheritdoc cref="MulticastFunc{TResult}"/>
     public sealed class MulticastFunc<TArg1, TArg2, TResult>
     {
         #region Operators
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Addition(MulticastFunc{TResult},MulticastFunc{TResult})"/>
         [return: MaybeNull]
         [return: NotNullIfNotNull(nameof(a))]
         [return: NotNullIfNotNull(nameof(b))]
@@ -21,6 +23,7 @@ namespace MulticastFunc
             return a.Combine(b.delegates);
         }
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Addition(MulticastFunc{TResult},Func{TResult})"/>
         [return: MaybeNull]
         [return: NotNullIfNotNull(nameof(a))]
         [return: NotNullIfNotNull(nameof(b))]
@@ -35,6 +38,7 @@ namespace MulticastFunc
             return a.Combine(b.GetInvocationList());
         }
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Subtraction(MulticastFunc{TResult},MulticastFunc{TResult})"/>
         [return: MaybeNull]
         public static MulticastFunc<TArg1, TArg2, TResult> operator -(
             [AllowNull] MulticastFunc<TArg1, TArg2, TResult> a,
@@ -45,6 +49,7 @@ namespace MulticastFunc
             return a?.Remove(b.delegates);
         }
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Subtraction(MulticastFunc{TResult},Func{TResult})"/>
         [return: MaybeNull]
         public static MulticastFunc<TArg1, TArg2, TResult> operator -(
             [AllowNull] MulticastFunc<TArg1, TArg2, TResult> a,
@@ -57,12 +62,14 @@ namespace MulticastFunc
         #endregion
 
         #region Conversions
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Implicit(Func{TResult})"/>
         [return: MaybeNull]
         [return: NotNullIfNotNull(nameof(f))]
         public static implicit operator MulticastFunc<TArg1, TArg2, TResult>(
             [AllowNull] Func<TArg1, TArg2, TResult> f)
             => f == null ? null : new MulticastFunc<TArg1, TArg2, TResult>(f.GetInvocationList());
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Explicit(MulticastFunc{TResult})"/>
         [return: MaybeNull]
         [return: NotNullIfNotNull(nameof(m))]
         public static explicit operator Func<TArg1, TArg2, TResult>(
@@ -79,6 +86,7 @@ namespace MulticastFunc
         #endregion
 
         #region Equality
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Equality(MulticastFunc{TResult},MulticastFunc{TResult})"/>
         public static bool operator ==(
             [AllowNull] MulticastFunc<TArg1, TArg2, TResult> a,
             [AllowNull] MulticastFunc<TArg1, TArg2, TResult> b)
@@ -90,11 +98,13 @@ namespace MulticastFunc
             return a.Equals(b);
         }
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.op_Inequality(MulticastFunc{TResult},MulticastFunc{TResult})"/>
         public static bool operator !=(
             [AllowNull] MulticastFunc<TArg1, TArg2, TResult> a,
             [AllowNull] MulticastFunc<TArg1, TArg2, TResult> b)
             => !(a == b);
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.Equals(object)"/>
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             if (obj == null)
@@ -107,18 +117,15 @@ namespace MulticastFunc
             return delegates.ArrayEqual(m.delegates);
         }
 
+        /// <inheritdoc cref="MulticastFunc{TResult}.GetHashCode"/>
         public override int GetHashCode()
             => delegates.GetArrayHash();
         #endregion
 
-        /// <summary>
-        /// The number of delegates this MulticastFunc is holding.
-        /// </summary>
+        /// <inheritdoc cref="MulticastFunc{TResult}.Count"/>
         public int Count => delegates.Length;
 
-        /// <summary>
-        /// Invoke all delegates and return their results.
-        /// </summary>
+        /// <inheritdoc cref="MulticastFunc{TResult}.Invoke()"/>
         public TResult[] Invoke(TArg1 arg1, TArg2 arg2)
         {
             var results = new TResult[Count];
@@ -133,14 +140,7 @@ namespace MulticastFunc
             return spanBuffer[..length];
         }
 
-        /// <summary>
-        /// Invokes all delegates regardless of individual failures.
-        /// </summary>
-        /// <remarks>
-        /// All exceptions are collected and re-thrown as a single 
-        /// <see cref="AggregateException"/> after every delegate has been invoked.
-        /// The result of failed delegates will be default(<see cref="TResult"/>).
-        /// </remarks>
+        /// <inheritdoc cref="MulticastFunc{TResult}.InvokeAll()"/>
         public TResult[] InvokeAll(TArg1 arg1, TArg2 arg2)
         {
             var results = new TResult[Count];
