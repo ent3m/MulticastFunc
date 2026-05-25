@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MulticastFunc
@@ -18,7 +19,7 @@ namespace MulticastFunc
                 return a;
             if (a == null)
                 return b;
-            return a.Combine(b.delegates);
+            return new(a._delegates.Combine(b._delegates));
         }
 
         [return: MaybeNull]
@@ -32,7 +33,7 @@ namespace MulticastFunc
                 return a;
             if (a == null)
                 return b;
-            return a.Combine(b.GetInvocationList());
+            return a + CreateMulticastFunc(b);
         }
 
         [return: MaybeNull]
@@ -42,7 +43,8 @@ namespace MulticastFunc
         {
             if (b == null)
                 return a;
-            return a?.Remove(b.delegates);
+            var dels = a?._delegates.Remove(b._delegates);
+            return dels == null ? null : new(dels);
         }
 
         [return: MaybeNull]
@@ -52,7 +54,7 @@ namespace MulticastFunc
         {
             if (b == null)
                 return a;
-            return a?.Remove(b.GetInvocationList());
+            return a - CreateMulticastFunc(b);
         }
         #endregion
 
@@ -61,7 +63,7 @@ namespace MulticastFunc
         [return: NotNullIfNotNull(nameof(f))]
         public static implicit operator MulticastFunc<TResult>(
             [AllowNull] Func<TResult> f)
-            => f == null ? null : new MulticastFunc<TResult>(f.GetInvocationList());
+            => f == null ? null : CreateMulticastFunc(f);
 
         [return: MaybeNull]
         [return: NotNullIfNotNull(nameof(m))]
@@ -71,10 +73,10 @@ namespace MulticastFunc
             if (m == null)
                 return null;
 
-            if (m.Count == 1 && m.delegates[0] is Func<TResult> f)
-                return f;
+            if (m.Count == 1)
+                return m._delegates[0].Value;
 
-            return (Func<TResult>)Delegate.Combine(m.delegates)!;
+            return default!; // implement this
         }
         #endregion
 
@@ -101,20 +103,20 @@ namespace MulticastFunc
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-            if (!(obj is MulticastFunc<TResult> m))
+            if (obj is not MulticastFunc<TResult> m)
                 return false;
 
-            return delegates.ArrayEqual(m.delegates);
+            return _delegates.ArrayEqual(m._delegates); // Wrapper implements equality comparer
         }
 
         public override int GetHashCode()
-            => delegates.GetArrayHash();
+            => _delegates.GetArrayHash(); // Implement this to compute hash based on Value
         #endregion
 
         /// <summary>
         /// The number of delegates this MulticastFunc is holding.
         /// </summary>
-        public int Count => delegates.Length;
+        public int Count => _delegates.Length;
 
         /// <summary>
         /// Invoke all delegates and return their results.
@@ -129,8 +131,8 @@ namespace MulticastFunc
         /// <inheritdoc cref="Invoke()"/>
         public ReadOnlySpan<TResult> Invoke(Span<TResult> spanBuffer)
         {
-            var length = FillBuffer(spanBuffer);
-            return spanBuffer[..length];
+            FillBuffer(spanBuffer);
+            return spanBuffer[..Count];
         }
 
         /// <summary>
@@ -152,62 +154,63 @@ namespace MulticastFunc
         public ReadOnlySpan<TResult> InvokeAll(Span<TResult> spanBuffer)
         {
             FillBufferAndAggregateExceptions(spanBuffer);
-            return spanBuffer[..delegates.Length];
+            return spanBuffer[..Count];
         }
 
-        private readonly Delegate[] delegates;
+        private Wrapper<Func<TResult>>[] _delegates;
 
-        private MulticastFunc(Delegate[] del)
+        private MulticastFunc(Wrapper<Func<TResult>>[] delegates)
         {
-            delegates = del;
+            _delegates = delegates;
         }
 
-        private MulticastFunc<TResult> Combine(Delegate[] functions)
-            => new MulticastFunc<TResult>(delegates.Combine(functions));
-
-        private MulticastFunc<TResult>? Remove(Delegate[] functions)
+        private static MulticastFunc<TResult> CreateMulticastFunc(Func<TResult> del)
         {
-            var results = delegates.Remove(functions);
-            // Everything was removed
-            if (results == null)
-                return null;
-            // Nothing was removed. No need to create a new MulticastFunc.
-            if (ReferenceEquals(results, delegates))
-                return this;
-            // Some were removed
-            return new MulticastFunc<TResult>(results);
-        }
+            if (del.HasSingleTarget)
+                return new([ new(del) ]);
 
-        private int FillBuffer(Span<TResult> buffer)
-        {
-            var length = delegates.Length;
-            if (buffer.Length < length)
-                throw new ArgumentException("Buffer is too small", nameof(buffer));
-            for (int i = 0; i < length; i++)
+            int i = 0;
+            foreach (var d in Delegate.EnumerateInvocationList(del))
             {
-                var func = (Func<TResult>)delegates[i];
+                i++;
+            }
+            var delegates = new Wrapper<Func<TResult>>[i];
+            i = 0;
+            foreach (var d in Delegate.EnumerateInvocationList(del))
+            {
+                delegates[i] = new(d);
+            }
+            return new(delegates);
+        }
+
+        private void FillBuffer(Span<TResult> buffer)
+        {
+            if (buffer.Length < Count)
+                throw new ArgumentException("Buffer is too small", nameof(buffer));
+
+            for (int i = 0; i < Count; i++)
+            {
+                var func = _delegates[i].Value;
                 buffer[i] = func();
             }
-            return length;
         }
 
         private void FillBufferAndAggregateExceptions(Span<TResult> buffer)
         {
-            var length = delegates.Length;
-            if (buffer.Length < length)
+            if (buffer.Length < Count)
                 throw new ArgumentException("Buffer is too small", nameof(buffer));
 
             List<Exception>? exceptions = null;
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < Count; i++)
             {
-                var func = (Func<TResult>)delegates[i];
+                var func = _delegates[i].Value;
                 try
                 {
                     buffer[i] = func();
                 }
                 catch (Exception ex)
                 {
-                    exceptions ??= new List<Exception>();
+                    exceptions ??= [];
                     exceptions.Add(ex);
                 }
             }
