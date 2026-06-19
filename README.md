@@ -67,7 +67,7 @@ ReadOnlySpan<string> results = multicastFunc.Invoke(buffer);
 - **Subscription Overhead**: `MulticastFunc` is immutable to match the behavior of standard delegates. As a result, subscribing (`+`) generates more garbage than native delegates.
 - **No Direct Method Group Assignments**: The compiler does not recognize `MulticastFunc` as a native delegate type. As a result, direct assignment from a method group `multicastFunc = MyMethod` is invalid; you must use compounding assignment `multicastFunc += MyMethod`.
 
-## Benchmarks
+## Benchmarks (.NET 8)
 `MulticastFunc.Invoke()` performs on par with a raw `Func.Invoke()` and runs *~6 times* faster than equivalent LINQ invocations.
 
 #### Invocation Performance
